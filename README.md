@@ -98,6 +98,8 @@ pm2 start ecosystem.config.cjs
 pm2 save && pm2 startup          # restart on reboot; run the command pm2 startup prints
 ```
 
+If the server's default `node` is older than 22.9 and other apps depend on it, install Node 22 alongside it and start with `ONEOFAKIND_NODE=/path/to/node-22/bin/node pm2 start ecosystem.config.cjs`; only this app uses it.
+
 Point a subdomain at the server and have the proxy forward it to `127.0.0.1:3000` with the client's address in `X-Forwarded-For`. Caddy and Traefik send that header by default. For nginx:
 
 ```nginx
