@@ -1,27 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { checkName, InvalidInputError } from '../src/check.js';
-import type { Http } from '../src/http.js';
 import { defaultConfig } from '../src/scoring/config.js';
 import { hackernews } from '../src/sources/hackernews.js';
 import { npm } from '../src/sources/npm.js';
-import type { Source, SourceContext } from '../src/sources/types.js';
-
-/** Serves canned JSON by URL prefix; anything unmatched is a 404 (resolves null). */
-function fakeHttp(routes: Record<string, unknown>): Http {
-  return {
-    async getJson<T>(url: string) {
-      const key = Object.keys(routes).find((prefix) => url.startsWith(prefix));
-      return (key === undefined ? null : routes[key]) as T | null;
-    },
-  };
-}
-
-const context = (http: Http, name = 'quillo'): SourceContext => ({
-  name,
-  http,
-  signal: new AbortController().signal,
-  prominence: defaultConfig.prominence,
-});
+import type { Source } from '../src/sources/types.js';
+import { context, fakeHttp } from './helpers.js';
 
 describe('npm source', () => {
   it('classifies search results and keeps scoped packages from blocking the name', async () => {
