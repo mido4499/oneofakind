@@ -1,9 +1,13 @@
 # oneofakind
 
-An API that tells you whether a project name is unique. It checks domains, package registries, GitHub, Docker Hub, Wikidata and Hacker News for the name and for names that look or sound like it. It returns a **0–100 uniqueness score** with a breakdown of what each collision costs.
+Tells you whether a project name is unique. It checks domains, package registries, GitHub, Docker Hub, Wikidata and Hacker News for the name and for names that look or sound like it, and returns a **0–100 uniqueness score** with a breakdown of what each collision costs.
+
+**Try it in the browser: [mido4499.github.io/oneofakind](https://mido4499.github.io/oneofakind/)**
+
+Or from the terminal, with Node.js 22.9+:
 
 ```console
-$ npm run check -- quillo --ecosystem js
+$ npx oneofakind quillo --ecosystem js
 
 quillo: 28/100 (high_risk), coverage 100%
 
@@ -19,7 +23,7 @@ Taken:     domain_com, domain_io, domain_app, domain_ai, domain_dev, github, pac
 
 > **Not legal advice.** This tool does not check trademarks yet. Before committing to a name, search the trademark databases for your market or ask a trademark attorney.
 
-## Quick start
+## Running from source
 
 Requires Node.js 22.9+ (`nvm use` picks it up from `.nvmrc`).
 

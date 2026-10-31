@@ -1,16 +1,29 @@
 {
   "name": "oneofakind",
   "version": "0.1.0",
-  "description": "API that checks how unique a project name is across domains, package registries, GitHub and more.",
+  "description": "Checks how unique a project name is across domains, package registries, GitHub and more. CLI and HTTP API.",
+  "keywords": [
+    "name",
+    "naming",
+    "project-name",
+    "availability",
+    "npm",
+    "pypi",
+    "domain",
+    "cli"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mido4499/oneofakind.git"
   },
-  "homepage": "https://github.com/mido4499/oneofakind#readme",
+  "homepage": "https://mido4499.github.io/oneofakind/",
   "bugs": "https://github.com/mido4499/oneofakind/issues",
-  "main": "dist/server.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "prepublishOnly": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && npm test && npm run build",
     "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
     "start": "node --env-file-if-exists=.env dist/server.js",
     "build": "tsc",
