@@ -21,7 +21,7 @@ Taken:     domain_com, domain_io, domain_app, domain_ai, domain_dev, github, pac
 
 ## Quick start
 
-Requires Node.js 22+.
+Requires Node.js 22.9+ (`nvm use` picks it up from `.nvmrc`).
 
 ```sh
 npm install
@@ -37,6 +37,12 @@ Set these in your shell or in a `.env` file at the repo root. The `dev`, `start`
 | `PORT` | HTTP port (default `3000`) |
 | `GITHUB_TOKEN` | Raises GitHub limits from 10 searches/minute and 60 requests/hour to 30/minute and 5,000/hour. Each check uses one of each. A fine-grained token with only public read-only access is enough. |
 | `ONEOFAKIND_USER_AGENT` | User-Agent sent upstream. Wikidata and crates.io ask for one that includes contact details. |
+| `HOST` | Bind address, e.g. `127.0.0.1` to accept connections only from a reverse proxy on the same machine |
+| `CORS_ORIGINS` | Comma-separated origins allowed to call `/v1/*` from a browser, e.g. `https://mido4499.github.io`. Unset: no CORS headers. |
+| `RATE_LIMIT_PER_MINUTE` | Checks per minute per client IP on `/v1/check`. Over the limit it returns `429` with `{ "error", "retryAfter" }`. Unset: no limit. |
+| `TRUST_PROXY` | `1` to identify clients by the last `X-Forwarded-For` entry. Set it only behind a reverse proxy, or clients can fake their IP. |
+
+The server refuses to start when one of these has an invalid value.
 
 ## API
 
@@ -45,7 +51,7 @@ Set these in your shell or in a `.env` file at the repo root. The `dev`, `start`
 | Query parameter | Description |
 |---|---|
 | `name` | 1–64 characters: letters, digits, `.`, `_`, `-` |
-| `ecosystem` | Optional: `js`, `python`, `rust`, `ruby`, `php`, `dotnet`, `java`, `homebrew` or `docker`. Gives that ecosystem's registry full weight, and caps the score if the name is taken there. |
+| `ecosystem` | Optional: `js`, `python`, `rust`, `ruby`, `php`, `dotnet`, `homebrew` or `docker`. Gives that ecosystem's registry full weight, and caps the score if the name is taken there. |
 | `sources` | Optional comma-separated subset, e.g. `npm,github,domains` |
 | `limit` | Maximum number of `hits` returned (default 50) |
 
@@ -53,7 +59,7 @@ Set these in your shell or in a `.env` file at the repo root. The `dev`, `start`
 {
   "name": "quillo",
   "ecosystem": "js",
-  "scoringVersion": "0.2.0",
+  "scoringVersion": "0.3.0",
   "score": 28,
   "label": "high_risk",            // highly_unique ≥ 85 > mostly_clear ≥ 65 > crowded ≥ 40 > high_risk
   "distinctiveness": 27.7,         // score before name penalties and blocker caps
@@ -74,6 +80,38 @@ Set these in your shell or in a `.env` file at the repo root. The `dev`, `start`
 
 Also available: `GET /v1/sources` (sources, weights and ecosystems) and `GET /health`.
 
+## Web page
+
+[`site/`](site) is a static page for GitHub Pages: visitors type a name and see the score, warnings, availability and closest matches. It has no build step and calls the API set in [`site/config.js`](site/config.js). The page accepts only lowercase letters and digits; the API and CLI also accept `.`, `_` and `-`.
+
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) publishes `site/` on every push to `main` that changes it. To enable it, set the repository's Settings → Pages → Source to "GitHub Actions".
+
+## Deploying the API
+
+The page needs the API running somewhere reachable over HTTPS. On a server with Node.js 22.9+, [pm2](https://pm2.keymetrics.io) and a reverse proxy that handles HTTPS:
+
+```sh
+git clone https://github.com/mido4499/oneofakind.git && cd oneofakind
+npm ci && npm run build
+cp .env.example .env             # then edit it: GITHUB_TOKEN, CORS_ORIGINS, ...
+pm2 start ecosystem.config.cjs
+pm2 save && pm2 startup          # restart on reboot; run the command pm2 startup prints
+```
+
+Point a subdomain at the server and have the proxy forward it to `127.0.0.1:3000` with the client's address in `X-Forwarded-For`. Caddy and Traefik send that header by default. For nginx:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
+
+Then put the subdomain's URL in [`site/config.js`](site/config.js).
+
+To update: `git pull && npm ci && npm run build && pm2 restart oneofakind`.
+
 ## Sources
 
 | Source | What is checked | Availability key |
@@ -86,7 +124,6 @@ Also available: `GET /v1/sources` (sources, weights and ecosystems) and `GET /he
 | `rubygems` | Search plus exact lookup; total downloads | `rubygems` |
 | `packagist` | Search; total downloads | `packagist` (vendor namespace) |
 | `nuget` | Search; total downloads | `nuget` |
-| `maven` | Maven Central search; release count as a popularity proxy | — (namespaced by groupId) |
 | `homebrew` | Probes of formulae and casks; 365-day installs | `homebrew` |
 | `dockerhub` | Repository search; pulls. Namespace lookup. | `dockerhub` (namespace) |
 | `wikidata` | Entity search; sitelinks, and whether the entity is software, a company or a product | — |
@@ -135,4 +172,9 @@ distinctiveness = 100 × Π (1 − clusterRisk)
 - No trademark data yet (USPTO/EUIPO/WIPO are planned).
 - Search-based sources find names that *contain* the query. Shorter look-alikes (e.g. `quill` for `quillo`) only surface where the source probes variants (PyPI, Homebrew, npm exact) or its search is fuzzy.
 - Go modules are not checked directly: Go has no central name registry and modules are named by repository path, so GitHub covers them.
+- Maven Central is not checked: its search API (`search.maven.org`) often takes 30 seconds or more to answer, and its index lags real releases by many months. Most Java libraries are on GitHub, and Maven coordinates are namespaced by groupId, so an existing artifactId never blocks a name.
 - Responses are cached in memory for 10 minutes. Upstream rate limits (GitHub search, pypistats, Tranco) apply per server instance.
+
+## License
+
+[MIT](LICENSE)

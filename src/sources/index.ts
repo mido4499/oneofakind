@@ -4,7 +4,6 @@ import { domains } from './domains.js';
 import { github } from './github.js';
 import { hackernews } from './hackernews.js';
 import { homebrew } from './homebrew.js';
-import { maven } from './maven.js';
 import { npm } from './npm.js';
 import { nuget } from './nuget.js';
 import { packagist } from './packagist.js';
@@ -22,7 +21,6 @@ export const allSources: Source[] = [
   rubygems,
   packagist,
   nuget,
-  maven,
   homebrew,
   dockerhub,
   wikidata,

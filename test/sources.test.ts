@@ -119,6 +119,7 @@ describe('checkName', () => {
     const result = await checkName('quillo', { sources: ['ok'] }, deps);
     expect(Object.keys(result.sources)).toEqual(['ok']);
     expect(result.coverage).toBe(1);
+    await expect(checkName('quillo', { sources: ['ok', 'nope'] }, deps)).rejects.toBeInstanceOf(InvalidInputError);
   });
 
   it('rejects invalid names', async () => {

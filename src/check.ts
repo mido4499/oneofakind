@@ -66,10 +66,11 @@ export async function checkName(
 ): Promise<CheckResult> {
   const name = parseName(rawName);
   const { config, http } = deps;
-  const selected = options.sources ? deps.sources.filter((source) => options.sources!.includes(source.id)) : deps.sources;
-  if (!selected.length) {
-    throw new InvalidInputError(`sources must include at least one of: ${deps.sources.map((s) => s.id).join(', ')}`);
+  const ids = deps.sources.map((source) => source.id);
+  if (options.sources && (!options.sources.length || options.sources.some((id) => !ids.includes(id)))) {
+    throw new InvalidInputError(`sources must be a comma-separated subset of: ${ids.join(', ')}`);
   }
+  const selected = options.sources ? deps.sources.filter((source) => options.sources!.includes(source.id)) : deps.sources;
 
   const runs = await Promise.all(
     selected.map(async (source) => {

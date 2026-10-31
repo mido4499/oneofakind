@@ -25,7 +25,6 @@ export interface ScoringConfig {
     rubygemsTotalDownloads: number;
     packagistTotalDownloads: number;
     nugetTotalDownloads: number;
-    mavenVersions: number;
     homebrewInstalls365d: number;
     homebrewFloor: number;
     dockerPulls: number;
@@ -51,7 +50,7 @@ export interface ScoringConfig {
 }
 
 export const defaultConfig: ScoringConfig = {
-  version: '0.2.0',
+  version: '0.3.0',
   weights: {
     domain_com: 0.6,
     domain_other: 0.2,
@@ -64,7 +63,6 @@ export const defaultConfig: ScoringConfig = {
     rubygems: 0.3,
     packagist: 0.3,
     nuget: 0.3,
-    maven: 0.3,
     dockerhub_official: 0.7,
     dockerhub_user: 0.2,
     wikidata_tech: 0.7,
@@ -78,8 +76,6 @@ export const defaultConfig: ScoringConfig = {
     ruby: { boost: { rubygems: 1 }, availabilityKey: 'rubygems' },
     php: { boost: { packagist: 1 }, availabilityKey: 'packagist' },
     dotnet: { boost: { nuget: 1 }, availabilityKey: 'nuget' },
-    // Maven coordinates are namespaced by groupId, so an existing artifactId never blocks you.
-    java: { boost: { maven: 1 } },
     homebrew: { boost: { homebrew: 1 }, availabilityKey: 'homebrew' },
     docker: { boost: { dockerhub_official: 1, dockerhub_user: 0.5 }, availabilityKey: 'dockerhub' },
   },
@@ -103,7 +99,6 @@ export const defaultConfig: ScoringConfig = {
     rubygemsTotalDownloads: 8.5,
     packagistTotalDownloads: 8,
     nugetTotalDownloads: 9,
-    mavenVersions: 2.5,
     homebrewInstalls365d: 6,
     homebrewFloor: 0.4,
     dockerPulls: 9,

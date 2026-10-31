@@ -19,7 +19,6 @@ export type WeightKey =
   | 'rubygems'
   | 'packagist'
   | 'nuget'
-  | 'maven'
   | 'homebrew'
   | 'dockerhub_official'
   | 'dockerhub_user'
@@ -27,9 +26,9 @@ export type WeightKey =
   | 'wikidata_other'
   | 'hackernews';
 
-export type Ecosystem = 'js' | 'python' | 'rust' | 'ruby' | 'php' | 'dotnet' | 'java' | 'homebrew' | 'docker';
+export type Ecosystem = 'js' | 'python' | 'rust' | 'ruby' | 'php' | 'dotnet' | 'homebrew' | 'docker';
 
-export const ECOSYSTEMS: Ecosystem[] = ['js', 'python', 'rust', 'ruby', 'php', 'dotnet', 'java', 'homebrew', 'docker'];
+export const ECOSYSTEMS: Ecosystem[] = ['js', 'python', 'rust', 'ruby', 'php', 'dotnet', 'homebrew', 'docker'];
 
 /** One existing thing whose name collides with (or resembles) the queried name. */
 export interface Hit {

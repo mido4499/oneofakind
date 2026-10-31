@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>oneofakind: check a project name</title>
+    <meta
+      name="description"
+      content="Check whether a project name is already taken on domains, GitHub, npm, PyPI and other registries, and how close the nearest collisions are."
+    />
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <span class="wordmark">oneofakind</span>
+      <a href="https://github.com/mido4499/oneofakind">Source code</a>
+    </header>
+
+    <main>
+      <form id="check-form" novalidate>
+        <h1>Check a project name before you commit to it</h1>
+        <p class="lede">
+          Searches domains, GitHub, npm, PyPI, crates.io, RubyGems, Packagist, NuGet, Homebrew, Docker Hub, Wikidata and
+          Hacker News for the name and for names that look or sound like it.
+        </p>
+
+        <label class="visually-hidden" for="name">Project name</label>
+        <input
+          id="name"
+          name="name"
+          class="name-input"
+          type="text"
+          placeholder="yourname"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          aria-describedby="name-note name-error"
+        />
+        <p id="name-note" class="note">
+          Use lowercase letters (a–z) and numbers (0–9) only. No spaces, hyphens or other special characters.
+        </p>
+        <p id="name-error" class="field-error" aria-live="polite"></p>
+
+        <div class="controls">
+          <label for="ecosystem">Ecosystem</label>
+          <select id="ecosystem" name="ecosystem">
+            <option value="">Any ecosystem</option>
+          </select>
+          <button id="submit" type="submit" disabled>Check name</button>
+        </div>
+      </form>
+
+      <p id="announce" class="visually-hidden" aria-live="polite"></p>
+      <section id="result" aria-busy="false"></section>
+    </main>
+
+    <footer>
+      <p>
+        This is not legal advice: trademarks aren't checked. Before you commit to a name, search the trademark databases for
+        your market.
+      </p>
+      <p>
+        <a href="https://github.com/mido4499/oneofakind#how-the-score-works">How the score is calculated</a>
+      </p>
+    </footer>
+  </body>
+</html>

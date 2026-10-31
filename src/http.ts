@@ -36,21 +36,38 @@ async function fetchJson<T>(url: string, { headers, signal }: RequestOptions): P
   return (await res.json()) as T;
 }
 
+/** Upper bound for one upstream request; callers usually give up sooner through their own signal. */
+const FETCH_TIMEOUT_MS = 30_000;
+
+/** Rejects as soon as `signal` aborts, without cancelling `promise` for anyone else awaiting it. */
+function abortable<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(signal.reason);
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort));
+  });
+}
+
 /** In-memory response cache: repeated checks of the same name don't burn upstream rate limits. */
 export function createHttp({ ttlMs = 10 * 60_000, maxEntries = 5_000 } = {}): Http {
   const cache = new Map<string, { expires: number; value: Promise<unknown> }>();
   return {
-    getJson<T>(url: string, options: RequestOptions = {}) {
-      const key = `${url} ${JSON.stringify(options.headers ?? {})}`;
+    getJson<T>(url: string, { headers, signal }: RequestOptions = {}) {
+      const key = `${url} ${JSON.stringify(headers ?? {})}`;
       const now = Date.now();
-      const cached = cache.get(key);
-      if (cached && cached.expires > now) return cached.value as Promise<T | null>;
-
-      const value = fetchJson<T>(url, options);
-      cache.set(key, { expires: now + ttlMs, value });
-      value.catch(() => cache.delete(key));
-      if (cache.size > maxEntries) cache.delete(cache.keys().next().value!);
-      return value;
+      let entry = cache.get(key);
+      if (!entry || entry.expires <= now) {
+        // Concurrent checks share this request, so it must not die with the first caller's signal.
+        const value = fetchJson<T>(url, { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        const created = { expires: now + ttlMs, value };
+        cache.set(key, created);
+        value.catch(() => cache.get(key) === created && cache.delete(key));
+        if (cache.size > maxEntries) cache.delete(cache.keys().next().value!);
+        entry = created;
+      }
+      return abortable(entry.value as Promise<T | null>, signal);
     },
   };
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { checkName, parseEcosystem } from './check.js';
+import { checkName, InvalidInputError, parseEcosystem, type CheckResult } from './check.js';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -16,10 +16,17 @@ if (!positionals[0]) {
   process.exit(1);
 }
 
-const result = await checkName(positionals[0], {
-  ecosystem: parseEcosystem(values.ecosystem),
-  sources: values.sources?.split(','),
-});
+let result: CheckResult;
+try {
+  result = await checkName(positionals[0], {
+    ecosystem: parseEcosystem(values.ecosystem),
+    sources: values.sources?.split(','),
+  });
+} catch (error) {
+  if (!(error instanceof InvalidInputError)) throw error;
+  console.error(error.message);
+  process.exit(1);
+}
 
 if (values.json) {
   console.log(JSON.stringify(result, null, 2));

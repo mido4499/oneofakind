@@ -2,6 +2,13 @@
   "name": "oneofakind",
   "version": "0.1.0",
   "description": "API that checks how unique a project name is across domains, package registries, GitHub and more.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mido4499/oneofakind.git"
+  },
+  "homepage": "https://github.com/mido4499/oneofakind#readme",
+  "bugs": "https://github.com/mido4499/oneofakind/issues",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
@@ -28,6 +35,6 @@
     "oneofakind": "dist/cli.js"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.9"
   }
 }
