@@ -1,10 +1,12 @@
 # oneofakind
 
-Tells you whether a project name is unique. It checks domains, package registries, GitHub, Docker Hub, Wikidata and Hacker News for the name and for names that look or sound like it, and returns a **0–100 uniqueness score** with a breakdown of what each collision costs.
-
 **Try it in the browser: [mido4499.github.io/oneofakind](https://mido4499.github.io/oneofakind/)**
 
-Or from the terminal, with Node.js 22.9+:
+[![The oneofakind web page: type a project name, pick an ecosystem and check it](docs/demo.gif)](https://mido4499.github.io/oneofakind/)
+
+Tells you whether a project name is unique. It checks domains, package registries, GitHub, Docker Hub, Wikidata and Hacker News for the name and for names that look or sound like it, and returns a **0–100 uniqueness score** with a breakdown of what each collision costs.
+
+You can also run it from the terminal, with Node.js 22.9+:
 
 ```console
 $ npx oneofakind quillo --ecosystem js
