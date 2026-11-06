@@ -4,7 +4,7 @@
 
 [![The oneofakind web page: type a project name, pick an ecosystem and check it](docs/demo.gif)](https://mido4499.github.io/oneofakind/)
 
-Tells you whether a project name is unique. It checks domains, package registries, GitHub, Docker Hub, Wikidata and Hacker News for the name and for names that look or sound like it, and returns a **0–100 uniqueness score** with a breakdown of what each collision costs.
+Tells you whether a project name is unique. Most name checkers only tell you whether the *exact* name is taken. oneofakind looks for anything people could **confuse** with your name: names spelled differently that sound the same, names one typo away, and your name with `-js`, `py` or `-cli` attached. It searches domains, package registries, GitHub, Docker Hub, Wikidata and Hacker News. Then it [compares every name they return with yours](#how-matching-works) and returns a **0–100 uniqueness score**, with a breakdown of what each look-alike costs.
 
 You can also run it from the terminal, with Node.js 22.9+:
 
@@ -24,6 +24,40 @@ Taken:     domain_com, domain_io, domain_app, domain_ai, domain_dev, github, pac
 ```
 
 > **Not legal advice.** This tool does not check trademarks yet. Before committing to a name, search the trademark databases for your market or ask a trademark attorney.
+
+## How matching works
+
+Fetching is the easy part: a single check gets back hundreds of names from the sources. What decides whether yours is unique is the step that follows. Every returned name goes through [`classifyMatch()`](src/matching.ts): package and repository names, domains, Wikidata labels, and the words of Hacker News titles. For each one it asks a question an availability check never asks: *could someone confuse this with your name?*
+
+```
+sources ──▶ hundreds of names ──▶ classifyMatch() ──────────────▶ hits ──▶ score
+                                  same name? variant? sounds      only names that
+                                  alike? a typo away? unrelated?  could be confused
+                                                                  with yours
+```
+
+Each name is tested against a ladder, strongest rung first. The first rung that fits decides the match type, and the match type sets the hit's weight `M` in the score:
+
+| Match | What it catches | Example (yours → found) | M |
+|---|---|---|---|
+| exact | The same name, in any case | `quillo` → `Quillo` | 1.0 |
+| normalized | The same once separators are removed, or singular vs. plural | `quillo` → `quill_o`, `quillos` | 0.9 |
+| affix | Your name plus a common ecosystem or product word (`js`, `py`, `cli`, `core`, `react`, `sdk`…) | `quillo` → `pyquillo`, `react-quillo-ui` | 0.6 |
+| phonetic | Spelled differently, sounds the same ([Double Metaphone](https://en.wikipedia.org/wiki/Metaphone#Double_Metaphone)) | `zephyr` → `zefir`, `quillo` → `kwillo` | 0.5 |
+| edit distance 1 | One typo away: a letter added, removed, changed, or two letters swapped | `orbit` → `orxit` | 0.45 |
+| edit distance 2 | Two typos away (names of 8+ characters) | `oneofakind` → `oneofakimb` | 0.2 |
+| substring | Contains your name | `quillo` → `quillometer` | 0.15 |
+| none | Unrelated, so dropped | `quillo` → `quilt` | — |
+
+Fuzzy matching is only useful if it doesn't flag everything, so the matcher has guards against false alarms:
+
+- **Short names only match closely.** Under 4 characters, only exact, normalized and affix matches count: `bun` matches `bun-js`, but not `bum` or `bunny`.
+- **Typo tolerance grows with length**, one edit per four characters: `orbit` matches `orxit` but not `orxix`.
+- **Sound-alikes must also look alike.** Phonetic codes are short, so unrelated words often share one. A phonetic match also needs the lengths within 2 characters of each other, and spellings no further apart than half the name.
+- **Namespaces count only when they are exactly your name.** The npm scope in `@quillo/core` and the Docker Hub owner `quillo` count as affix matches, while `eliasronquillo/app` doesn't. A scoped package never counts as exact, because it doesn't stop anyone publishing the bare name.
+- **Free text is held to a higher bar.** In Hacker News titles, only exact, normalized and affix matches count: fuzzy matching against ordinary words is mostly noise.
+
+A name the platform would treat as identical to yours (case and separators ignored) also marks your name as *taken* there, which is what `availability` reports. Everything else becomes a weighted hit: [the score](#how-the-score-works) multiplies each match's `M` by how popular and how active the existing project is.
 
 ## Running from source
 
@@ -150,7 +184,7 @@ risk = W × M × P × A × D
 ```
 
 - **W, source weight:** how much a collision of this kind matters. Examples: `.com` 0.6, other TLDs 0.2, GitHub repo 0.6, npm/PyPI 0.5, official Docker image 0.7, Wikidata software/company 0.7. The `ecosystem` registry is raised to 1.0.
-- **M, match type:** exact 1.0, normalized (case, separators, plural) 0.9, affix (`quillo-js`, `pyquillo`) 0.6, phonetic (Double Metaphone) 0.5, edit distance 1: 0.45, edit distance 2: 0.2, substring 0.15. Edit distance is only allowed up to `floor(length / 4)`. Names shorter than 4 characters only match exactly, normalized or by affix.
+- **M, match type:** from the [matching ladder](#how-matching-works), from exact 1.0 down to substring 0.15.
 - **P, prominence:** log-scaled popularity, e.g. `log10(stars + 1) / 5` (100k stars = 1.0) or `log10(weeklyDownloads + 1) / 7`. Clamped to 0.05–1.
 - **A, activity:** `0.5 + 0.5 × exp(−monthsSinceLastRelease / 24)`. A dead project counts half as much as an active one. Unknown dates count 0.75. Domains and Wikidata always count 1.
 - **D, tail decay:** within one weight key, the n-th strongest hit counts `0.5^n`. Fifty tiny `quillo-*` repos then weigh about as much as two. The key's combined risk is also capped at its W.
